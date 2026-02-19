@@ -9,6 +9,7 @@ import { EVENT_CONFIG } from "./src/lib/constants";
 import GridOverlay from "./src/components/ui/GridOverlay";
 import TheManifesto from "./src/components/sections/TheManifesto";
 import NoiseTexture from "./src/components/ui/NoiseTexture";
+import Invitation from "./src/components/sections/Invite";
 
 export default function Home() {
   const [geekLevel, setGeekLevel] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export default function Home() {
 
       <div className="md:pt-10">
         <Hero />
+        <Invitation />
         <TheManifesto />
         <ArchiveList onSelect={(level) => setGeekLevel(level)} />
         {geekLevel && <BookingPortal level={geekLevel} />}
