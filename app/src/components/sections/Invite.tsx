@@ -1,86 +1,153 @@
- "use client";
+"use client";
 
 import { motion } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
 
 const topics = [
-  "Why you believe One Piece is peak fiction",
-  "The economics of sneaker culture",
-  "Your 12-step espresso optimization ritual",
-  "A breakdown of your D&D campaign lore",
-  "Why your startup idea might change the world",
-  "The psychology of villain origin stories",
+  "The psychology of concentrated wealth",
+  "Power, legitimacy, and the illusion of consent",
+  "The mechanics of the four wheeled beast know as cars",
+  "The political history of architecture as a tool of power",
+  "How agricultural systems quietly shaped empires",
+  "Energy transitions and who actually benefits from them",
+  "Exchange theory and the invisible rules of markets",
+  "Space exploration as geopolitical theater",
+  "The anatomy of financial bubbles",
+  "How infrastructure determines destiny",
+  "What investment culture reveals about modern belief systems",
 ];
 
 export default function Invitation() {
+  const rotations = [-3, 2, -2, 3, -1, 2];
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (carouselRef.current) {
+      setWidth(
+        carouselRef.current.scrollWidth - carouselRef.current.offsetWidth
+      );
+    }
+  }, []);
+
   return (
-    <section id="invitation" className="relative py-32 px-6 overflow-hidden">
-        <div
-            className="absolute inset-0 opacity-20 pointer-events-none"
-            style={{
-            backgroundImage: "url('/me/paper.jpg')",
-            backgroundSize: "600px",
-            }}
-        />
+    <section id="invitation" className="relative py-20 px-6">
+      {/* subtle paper texture */}
+      <div
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{
+          backgroundImage: "url('/me/paper.jpg')",
+          backgroundSize: "600px",
+        }}
+      />
 
-      {/* SECTION HEADER */}
       <div className="relative z-10">
-        <div className="max-w-3xl mx-auto text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-black uppercase mb-6">
-            What Is This?
-            </h2>
 
-            <p className="text-lg md:text-xl leading-relaxed">
-            For one month after my birthday,
-            I’m hosting intentional 1:1 deep dives.
-            <br /><br />
-            Your topic. Your obsession.
+        {/* ===== MANIFESTO + INTRO ===== */}
+        <div className="max-w-3xl mx-auto text-center mb-24">
+
+          <p className="text-base font-mono uppercase tracking-widest mb-6">
+            The Concept
+          </p>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-6xl font-black leading-[1.05] uppercase tracking-tight mb-10"
+          >
+            This is not a party.
             <br />
-            I listen. Fully.
-            </p>
+            It is an exhibition
+            <br />
+            of your obsession.
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-lg md:text-xl leading-relaxed"
+          >
+            For one month after my birthday,
+            I’m setting aside time for intentional 1:1 conversations.
+            <br /><br />
+            No small talk. No performative catchups.
+            <br /><br />
+             For one evening, I become a curator.
+              You become the artist.
+              Your fixation becomes the installation.
+            <br /><br />
+            I’ll listen carefully.
+          </motion.p>
         </div>
 
-        {/* COLLAGE CARDS */}
-        <div className="relative max-w-6xl mx-auto h-125 space-y-2">
-
+        {/* ===== MOBILE SWIPEABLE CARDS ===== */}
+        <div className="md:hidden overflow-hidden">
+          <motion.div
+            ref={carouselRef}
+            drag="x"
+            dragConstraints={{ left: -width, right: 0 }}
+            className="flex gap-8 cursor-grab active:cursor-grabbing"
+          >
             {topics.map((topic, i) => (
-            <motion.div
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
-                whileHover={{ scale: 1.05, rotate: 0 }}
-                transition={{ duration: 0.4 }}
-                className="absolute bg-white shadow-xl border-2 border-black p-6 w-65 rounded-xl"
+                className="relative min-w-[75%] max-w-70 bg-white border border-neutral-800 p-8 shadow-lg"
                 style={{
-                top: `${(i % 3) * 140}px`,
-                left: `${(i % 2) * 320 + (i > 2 ? 150 : 0)}px`,
-                transform: `rotate(${i % 2 === 0 ? -6 : 5}deg)`
+                  transform: `rotate(${rotations[i]}deg)`
                 }}
-            >
-                <p className="text-sm uppercase mb-3">
-                Possible Topic
+              >
+                <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-6">
+                  Possible Topic
                 </p>
 
-                <p className="text-xl tracking-wide" style={{ fontFamily: "var(--font-hand)" }}>
-                {topic}
+                <p className="text-lg leading-snug">
+                  {topic}
                 </p>
-            </motion.div>
+
+                <div className="absolute top-0 right-0 h-full w-0.75 bg-neutral-800 opacity-10" />
+              </motion.div>
             ))}
-
+          </motion.div>
         </div>
 
-        {/* CTA */}
-        <div className="text-center mt-24">
-            <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-black text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg"
+        {/* ===== DESKTOP COLLAGE ===== */}
+        <div className="relative max-w-6xl mx-auto min-h-175 hidden md:block mt-16">
+          {topics.map((topic, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.4 }}
+              className="absolute bg-white shadow-lg border border-neutral-800 p-8 rounded-lg"
+              style={{
+                top: `${(i % 3) * 160}px`,
+                left: `${(i % 2) * 340 + (i > 2 ? 170 : 0)}px`,
+                transform: `rotate(${rotations[i]}deg)`
+              }}
             >
-            I’m Ready to Bore You.
-            </motion.button>
-        </div>
-      </div>
+              <p className="text-xs uppercase tracking-widest text-neutral-500 mb-3">
+                Possible Topic
+              </p>
 
+              <p className="text-xl leading-snug">
+                {topic}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+        
+      </div>
     </section>
   );
 }

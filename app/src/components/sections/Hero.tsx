@@ -1,27 +1,62 @@
 /* eslint-disable react-hooks/purity */
 "use client";
-import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect } from "react";
-import Typewriter from "../ui/Typewriter";
+import ScriptedTypewriter from "../ui/Typewriter";
 
 const photos = [
   "/me/p5.jpg",
   "/me/p4.jpg",
-  "/me/p2.jpg",
   "/me/p6.jpg",
+  "/me/p2.jpg",
 ];
 
+function getDaysUntilBirthday() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const birthday = new Date(year, 2, 14); 
+
+  if (birthday < today) {
+    birthday.setFullYear(year + 1);
+  }
+
+  const diff = birthday.getTime() - today.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
 export default function Hero() {
-  const [firstDone, setFirstDone] = useState(false);
+  const daysLeft = getDaysUntilBirthday();
+
+  const script = [
+    {
+      text: "Hiii...",
+      pauseAfter: 1200,
+      clearAfter: true,
+    },
+    {
+      text: "My name is Betty",
+      pauseAfter: 1800,
+      clearAfter: true,
+    },
+    {
+      text: `and my birthday is in ${daysLeft} days.`,
+      pauseAfter: 1800,
+      clearAfter: true,
+    },
+    {
+      text: "Instead of gifts, I want your nerdiest obsessions. Healthy ones 🌚",
+      pauseAfter: 2500,
+      clearAfter: false,
+    },
+  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
       document.getElementById("invitation")?.scrollIntoView({
         behavior: "smooth",
       });
-    }, 12000);
+    }, 23500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -134,27 +169,18 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 5.5, duration: 1 }}
+          transition={{ delay: 6.5, duration: 1 }}
           className="absolute z-30"
         >
-          <div className="bg-white px-10 py-8 rounded-3xl shadow-2xl border-4 border-white max-w-md mx-auto">
+          <div className="bg-white px-10 py-8 rounded-3xl shadow-2xl border-4 border-white max-w-lg mx-auto">
 
-            <h1 className="text-lg md:text-xl font-black text-black text-center">
-              <Typewriter
-                text="But instead of gifts."
-                speed={70}
-                onComplete={() => setFirstDone(true)}
+            <p className="text-lg md:text-xl font-semibold text-black text-center leading-relaxed">
+              <ScriptedTypewriter
+                script={script}
+                speed={75}
+                startDelay={7200}
               />
-            </h1>
-
-            {firstDone && (
-              <p className="mt-6 text-lg md:text-xl font-black text-black text-center">
-                <Typewriter
-                  text="I want your nerdiest obsession."
-                  speed={70}
-                />
-              </p>
-            )}
+            </p>
 
           </div>
         </motion.div>

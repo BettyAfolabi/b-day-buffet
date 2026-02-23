@@ -1,42 +1,68 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function Typewriter({
-  text,
-  delay = 0,
-  speed = 50,
-  onComplete,
-}: {
+type ScriptLine = {
   text: string;
-  delay?: number;
+  pauseAfter?: number;
+  clearAfter?: boolean;
+};
+
+export default function ScriptedTypewriter({
+  script,
+  speed = 60,
+  startDelay = 0,
+}: {
+  script: ScriptLine[];
   speed?: number;
-  onComplete?: () => void;
+  startDelay?: number;
 }) {
+  const [lineIndex, setLineIndex] = useState(0);
   const [displayed, setDisplayed] = useState("");
+  const [hasStarted, setHasStarted] = useState(false);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ⏳ Delay start
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHasStarted(true);
+    }, startDelay);
+
+    return () => clearTimeout(timer);
+  }, [startDelay]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    if (!hasStarted) return;
+    if (lineIndex >= script.length) return;
 
-    const start = setTimeout(() => {
-      let i = 0;
+    const currentLine = script[lineIndex];
+    let i = 0;
 
-      interval = setInterval(() => {
-        setDisplayed(text.slice(0, i));
-        i++;
+    setDisplayed("");
 
-        if (i > text.length) {
-          clearInterval(interval);
-          onComplete?.();
-        }
-      }, speed);
-    }, delay);
+    intervalRef.current = setInterval(() => {
+      setDisplayed(currentLine.text.slice(0, i));
+      i++;
+
+      if (i > currentLine.text.length) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+
+        timeoutRef.current = setTimeout(() => {
+          if (currentLine.clearAfter) {
+            setDisplayed("");
+          }
+          setLineIndex((prev) => prev + 1);
+        }, currentLine.pauseAfter ?? 1200);
+      }
+    }, speed);
 
     return () => {
-      clearTimeout(start);
-      clearInterval(interval);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [text, delay, speed, onComplete]);
+  }, [lineIndex, hasStarted, script, speed]);
 
   return <span>{displayed}</span>;
 }
