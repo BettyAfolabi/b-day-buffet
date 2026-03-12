@@ -5,8 +5,9 @@ import { useRef, useEffect, useState } from "react";
 
 const topics = [
   "The psychology of concentrated wealth",
-  "Power, legitimacy, and the illusion of consent",
+  "Food",
   "The mechanics of the four wheeled beast know as cars",
+  "Startups and Businesses in Africa",
   "The political history of architecture as a tool of power",
   "How agricultural systems quietly shaped empires",
   "Energy transitions and who actually benefits from them",
@@ -56,13 +57,13 @@ export default function Invitation() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-6xl font-black leading-[1.05] uppercase tracking-tight mb-10"
+            className="text-4xl md:text-6xl font-black leading-tight uppercase tracking-tight mb-10"
           >
             This is not a party.
             <br />
             It is an exhibition
             <br />
-            of your obsession.
+            of your interest.
           </motion.h2>
 
           <motion.p
@@ -120,31 +121,44 @@ export default function Invitation() {
         </div>
 
         {/* ===== DESKTOP COLLAGE ===== */}
-        <div className="relative max-w-6xl mx-auto min-h-175 hidden md:block mt-16">
-          {topics.map((topic, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.03 }}
-              transition={{ duration: 0.4 }}
-              className="absolute bg-white shadow-lg border border-neutral-800 p-8 rounded-lg"
-              style={{
-                top: `${(i % 3) * 160}px`,
-                left: `${(i % 2) * 340 + (i > 2 ? 170 : 0)}px`,
-                transform: `rotate(${rotations[i]}deg)`
-              }}
-            >
-              <p className="text-xs uppercase tracking-widest text-neutral-500 mb-3">
-                Possible Topic
-              </p>
+        {/* ===== DESKTOP COLLAGE (FIXED SPACING) ===== */}
+        <div className="relative max-w-6xl mx-auto min-h-200 hidden md:block mt-16">
+          {topics.map((topic, i) => {
+            // Math to spread 12 items across a 4-column grid
+            const column = i % 4; // 0, 1, 2, 3
+            const row = Math.floor(i / 4); // 0, 1, 2
+            
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                whileHover={{ 
+                  scale: 1.05, 
+                  zIndex: 50, // Brings the hovered card to the very front
+                  transition: { duration: 0.2 } 
+                }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="absolute bg-white shadow-xl border border-neutral-800 p-6 rounded-lg w-70"
+                style={{
+                  // Spreading cards out: 220px vertical gap, 300px horizontal gap
+                  top: `${row * 220 + (column % 2 === 0 ? 0 : 40)}px`, 
+                  left: `${column * 280}px`,
+                  transform: `rotate(${rotations[i % rotations.length]}deg)`,
+                  zIndex: i, // Ensures natural stacking
+                }}
+              >
+                <p className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 mb-3">
+                  Possible Topic / {String(i + 1).padStart(2, '0')}
+                </p>
 
-              <p className="text-xl leading-snug">
-                {topic}
-              </p>
-            </motion.div>
-          ))}
+                <p className="text-lg font-bold leading-tight tracking-tight">
+                  {topic}
+                </p>
+              </motion.div>
+            );
+          })}
         </div>
         
       </div>
