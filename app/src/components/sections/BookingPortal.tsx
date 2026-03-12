@@ -1,130 +1,204 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { InlineWidget } from "react-calendly";
 import { QUESTION_FLOW } from "../../lib/constants";
+import { db } from "../../lib/firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import Confetti from "../ui/confetti";
 
-// --- Types ---
+const CALENDLY_LINKS = {
+  virtual: process.env.NEXT_PUBLIC_VIRTUAL_LINK || "",
+  physical: process.env.NEXT_PUBLIC_INPERSON_LINK || "",
+  walk: process.env.NEXT_PUBLIC_INPERSON_LINK || "",
+} as const;
+
 type QuestionKey = keyof typeof QUESTION_FLOW;
-
-type Option = {
-  label: string;
-  value: string;
-  next: QuestionKey; // strictly typed to valid keys
-};
-
-type Question = {
-  id: QuestionKey;
-  question: string;
-  options?: readonly Option[];
-  type?: "input" | "textarea";
-  next?: QuestionKey;
-};
-
 type Answers = Record<string, string>;
 
-// --- Component ---
 export default function BookingFlow() {
   const [answers, setAnswers] = useState<Answers>({});
   const [inputValue, setInputValue] = useState("");
+  const [currentId, setCurrentId] = useState<QuestionKey>("geekLevel");
+  const [showFinePrint, setShowFinePrint] = useState(false);
+  const [history, setHistory] = useState<QuestionKey[]>([]);
+  const [isBooked, setIsBooked] = useState(false);
 
-  const [currentId, setCurrentId] = useState<keyof typeof QUESTION_FLOW>("geekLevel");
-  const current = QUESTION_FLOW[currentId] as Question; 
+  const current = QUESTION_FLOW[currentId];
 
-  // --- Option button click ---
+  const goTo = (next: QuestionKey) => {
+    setHistory((prev) => [...prev, currentId]);
+    setCurrentId(next);
+  };
+
+  const handleBack = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1));
+    setCurrentId(previous);
+  };
+
+  const saveToFirebase = async (finalAnswers: Answers) => {
+    try {
+      const docRef = await addDoc(collection(db, "bookings"), {
+        ...finalAnswers,
+        createdAt: serverTimestamp(),
+      });
+      console.log("Document written with ID: ", docRef.id); // If you see this in console, it worked!
+      return true;
+    } catch (error) {
+      console.error("Firebase Error:", error);
+      return false;
+    }
+  };
+
   const handleOptionSelect = (value: string, next?: QuestionKey) => {
-    const updatedAnswers = { ...answers, [current.id]: value };
+    const updatedAnswers = { ...answers, [currentId]: value };
     setAnswers(updatedAnswers);
-    setInputValue("");
 
-    if (next && next in QUESTION_FLOW) {
-      setCurrentId(next);
-    } else {
-      console.log("FINAL ANSWERS (Option):", updatedAnswers);
+    if (currentId === "location" && value === "island") {
+      setShowFinePrint(true);
+      return;
     }
+
+    if (currentId === "location" && value === "outside") {
+      setAnswers({ ...updatedAnswers, format: "virtual" });
+      goTo("topic");
+      return;
+    }
+
+    if (next) goTo(next);
   };
 
-  // --- Input / textarea submit ---
-  const handleTextSubmit = () => {
+  const handleTextSubmit = async () => {
     if (!inputValue.trim()) return;
-
-    const updatedAnswers = { ...answers, [current.id]: inputValue };
+    const updatedAnswers = { ...answers, [currentId]: inputValue };
     setAnswers(updatedAnswers);
     setInputValue("");
 
-    if (current.next && current.next in QUESTION_FLOW) {
-      setCurrentId(current.next);
-    } else {
-      console.log("FINAL ANSWERS (Text):", updatedAnswers);
+    if (currentId === "askMe") {
+      await saveToFirebase(updatedAnswers);
+      setCurrentId("complete");
+    } else if ("next" in current && current.next) {
+      goTo(current.next as QuestionKey);
     }
   };
+
+  useEffect(() => {
+    const handleCalendlyEvent = (e: MessageEvent) => {
+      // Check if the event is specifically a successful booking
+      if (e.data.event === 'calendly.event_scheduled') {
+        setIsBooked(true);
+      }
+    };
+
+    window.addEventListener('message', handleCalendlyEvent);
+    return () => window.removeEventListener('message', handleCalendlyEvent);
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-yellow-300 via-pink-300 to-blue-300 p-6">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentId}
-          initial={{ x: 120, opacity: 0, rotate: 3 }}
-          animate={{ x: 0, opacity: 1, rotate: 0 }}
-          exit={{ x: -120, opacity: 0, rotate: -3 }}
-          transition={{ duration: 0.4 }}
-          className="bg-white w-full max-w-md p-10 rounded-2xl shadow-2xl relative"
-        >
-          {/* Question */}
-          <h2 className="text-2xl font-black mb-8">{current.question}</h2>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-yellow-300 via-pink-300 to-blue-300 p-6">
+      {isBooked && <Confetti />}
+      
+      <div className="relative w-full max-w-md">
+        {history.length > 0 && currentId !== "complete" && (
+          <button onClick={handleBack} className="mb-4 text-sm font-bold hover:opacity-60 transition uppercase">
+            ← Previous Question
+          </button>
+        )}
 
-          {/* Options */}
-          {current.options && (
-            <div className="grid gap-4">
-              {current.options.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => handleOptionSelect(opt.value, opt.next)}
-                  className="border-2 border-black p-4 font-bold hover:bg-black hover:text-white transition rounded-lg"
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentId}
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -50, opacity: 0 }}
+            className="bg-white w-full p-8 rounded-2xl shadow-2xl border-2 border-black overflow-hidden"
+          >
+            {currentId === "complete" ? (
+              <div className="space-y-4">
+                {isBooked ? (
+                  /* --- SUCCESS TICKET STUB --- */
+                  <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-center py-6 space-y-4">
+                    <div className="bg-acid-yellow border-2 border-black p-4 rotate-2">
+                      <h2 className="text-3xl font-black uppercase">Entry Granted.</h2>
+                    </div>
+                    <p className="font-bold uppercase text-xs">The Archive is ready, {answers.name}.</p>
+                    <div className="border-t-2 border-dashed border-black pt-4 text-[10px] text-left font-mono">
+                      <p>TOPIC: {answers.topic?.toUpperCase()}</p>
+                      <p>FORMAT: {answers.format?.toUpperCase()}</p>
+                      <p className="mt-4 opacity-50 italic text-center">Check your WhatsApp/Email for details.</p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  /* --- CALENDLY VIEW --- */
+                  <>
+                    <h2 className="text-2xl font-black uppercase">Secure Your Slot</h2>
+                    <p className="text-[10px] font-mono bg-black text-white p-2 inline-block">
+                      MODE: {answers.format?.toUpperCase()}
+                    </p>
+                    <div className="h-125 -mx-4 overflow-y-auto border-t-2 border-black mt-4">
+                      <InlineWidget 
+                        url={CALENDLY_LINKS[answers.format as keyof typeof CALENDLY_LINKS] || CALENDLY_LINKS.virtual}
+                        prefill={{
+                          name: answers.name,
+                          customAnswers: { a8: answers.topic } 
+                        }}
+                        styles={{ height: '1000px' }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              /* --- STANDARD QUESTION VIEW --- */
+              <>
+                <h2 className="text-xl font-black mb-8 uppercase tracking-tight">{current.question}</h2>
+                {"options" in current && (
+                  <div className="grid gap-3">
+                    {current.options.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => handleOptionSelect(opt.value, opt.next as QuestionKey)}
+                        className="border-2 border-black p-4 text-left font-bold hover:bg-black hover:text-white transition-all active:scale-95"
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {("type" in current) && (
+                  <div className="space-y-4">
+                    {current.type === "input" ? (
+                      <input value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="border-2 border-black p-4 w-full font-bold outline-none" placeholder="Type here..." />
+                    ) : (
+                      <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="border-2 border-black p-4 w-full h-32 font-bold outline-none" placeholder="Go deep..." />
+                    )}
+                    <button onClick={handleTextSubmit} className="bg-black text-white p-4 font-bold w-full">CONTINUE →</button>
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
-          {/* Input */}
-          {current.type === "input" && (
-            <div className="space-y-4">
-              <input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="border-2 border-black p-4 w-full rounded-lg"
-                placeholder="Type your answer here..."
-              />
-              <button
-                onClick={handleTextSubmit}
-                className="bg-black text-white p-4 font-bold w-full rounded-lg"
-              >
-                Continue
-              </button>
-            </div>
+        {/* --- FINE PRINT MODAL --- */}
+        <AnimatePresence>
+          {showFinePrint && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-yellow-300 border-4 border-black p-8 max-w-sm">
+                <h3 className="text-2xl font-black mb-4 uppercase">Patronage Advisory</h3>
+                <p className="font-bold mb-6 leading-tight text-sm">If the bill exceeds 5k, it’s your birthday gift to me. Deal?</p>
+                <div className="flex flex-col gap-3">
+                  <button onClick={() => { setAnswers({...answers, format: 'physical'}); setShowFinePrint(false); goTo("topic"); }} className="bg-black text-white p-4 font-black">I ACCEPT THE TERMS</button>
+                  <button onClick={() => { setAnswers({...answers, format: 'virtual'}); setShowFinePrint(false); goTo("topic"); }} className="border-2 border-black p-4 font-black uppercase text-xs">{`Actually, let's do virtual`}</button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
-
-          {/* Textarea */}
-          {current.type === "textarea" && (
-            <div className="space-y-4">
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="border-2 border-black p-4 w-full h-32 rounded-lg"
-                placeholder="Write your answer here..."
-              />
-              <button
-                onClick={handleTextSubmit}
-                className="bg-black text-white p-4 font-bold w-full rounded-lg"
-              >
-                Continue
-              </button>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

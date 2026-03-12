@@ -43,11 +43,11 @@ export const GEEK_LEVELS: GeekLevel[] = [
 export const QUESTION_FLOW = {
   geekLevel: {
     id: "geekLevel",
-    question: "Select Your Depth",
+    question: "Choose your Geek level",
     options: [
-      { label: "Casual Curiosity", value: "light", next: "format" },
-      { label: "Deep Dive", value: "deep", next: "format" },
-      { label: "Intellectual Combat", value: "extreme", next: "format" }
+      { label: "Casual Passion - I just love this topic", value: "light", next: "format" },
+      { label: "Deep Dive - I have arguments and examples.", value: "deep", next: "format" },
+      { label: "Unhinged Expert Mode - I have sources.", value: "extreme", next: "format" }
     ]
   },
 
@@ -55,7 +55,7 @@ export const QUESTION_FLOW = {
     id: "format",
     question: "Where shall this unfold?",
     options: [
-      { label: "Virtual", value: "virtual", next: "topic" },
+      { label: "Virtual (Global Digital Portal)", value: "virtual", next: "topic" },
       { label: "In Person", value: "physical", next: "location" },
       { label: "Walk & Talk", value: "walk", next: "location" }
     ]
@@ -63,33 +63,53 @@ export const QUESTION_FLOW = {
 
   location: {
     id: "location",
-    question: "Are you in Lagos?",
+    question: "Are you on or near the Island? (Lekki / Ikoyi / Ajah)",
     options: [
-      { label: "Yes", value: "yes", next: "specific" },
-      { label: "No", value: "no", next: "go_back" },
+      { label: "Yes, Island Zone", value: "island", next: "fine_print" },
+      { label: "No, I'm elsewhere", value: "outside", next: "virtual_redirect" },
     ]
   },
 
-  specific: {
-    id: "specific",
-    question: "If we’re meeting at a spot with a 'Minimum Spend,' consider the bill your Patronage of the Arts. You bring the obsession; you bring the wallet. Deal?",
-    options: [
-      { label: "Yes", value: "yes", next: "topic" },
-      { label: "No", value: "no", next: "go_back" },
-    ]
+  fine_print: {
+    id: "fine_print",
+    question: "", // handled by modal instead
+  },
+
+  virtual_redirect: {
+    id: "virtual_redirect",
+    question: "", // handled automatically
   },
 
   topic: {
     id: "topic",
-    question: "What idea has been living in your head lately?",
+    question: "What topic would you happily rant about for an hour with zero preparation?",
     type: "textarea",
-    next: "format"
+    next: "name"
   },
 
   name: {
     id: "name",
-    question: "What should I call you? And please let me have your whatsapp line",
+    question: "What should I call you?",
+    type: "input",
+    next: "contact"
+  },
+
+  contact: {
+    id: "contact",
+    question: "Kindly enter your WhatsApp line.",
+    type: "input",
+    next: "askMe"
+  },
+
+  askMe: {
+    id: "askMe",
+    question: "Anything you’d like to ask me before we meet?",
     type: "input",
     next: "complete"
-  } 
-};
+  },
+
+  complete: {
+    id: "complete",
+    question: "You're in. I'll be in touch shortly.",
+  }
+} as const;
