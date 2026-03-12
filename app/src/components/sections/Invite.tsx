@@ -83,6 +83,7 @@ export default function Invitation() {
               Your fixation becomes the installation.
             <br /><br />
             I’ll listen carefully. 
+            <br /><br />
             And you get a crochet piece for free if we meet physically..
           </motion.p>
         </div>
