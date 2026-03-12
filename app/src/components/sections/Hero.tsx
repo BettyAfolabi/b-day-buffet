@@ -8,8 +8,8 @@ import ScriptedTypewriter from "../ui/Typewriter";
 const photos = [
   "/me/p5.jpg",
   "/me/p4.jpg",
-  "/me/p6.jpg",
   "/me/p2.jpg",
+  "/me/p6.jpg",
 ];
 
 function getDaysUntilBirthday() {

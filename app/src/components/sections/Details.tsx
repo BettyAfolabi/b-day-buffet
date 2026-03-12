@@ -1,8 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function Details() {
+  const scrollToBooking = () => {
+    const element = document.getElementById("booking-portal");
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: "smooth",
+        block: "start" 
+      });
+    }
+  };
+
   return (
     <section className="relative py-28 px-6 bg-neutral-50 border-t border-neutral-300">
 
@@ -72,8 +83,24 @@ export default function Details() {
           </div>
         </div>
 
+        <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="md:col-span-5 mb-20"
+          >
+            <div className="relative aspect-4/5 bg-neutral-200 border-2 border-black grayscale shadow-[12px_12px_0_0_#000] overflow-hidden">
+              <Image 
+                src="/me/p1.jpg" 
+                alt="The Curator"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </motion.div>
+
         {/* LOCATION OPTIONS */}
-        <div className="mb-20">
+        <div className="mt-2 mb-20">
           <h3 className="text-sm font-mono uppercase tracking-widest mb-6">
             Location Options
           </h3>
@@ -126,7 +153,7 @@ export default function Details() {
 
               <div className="text-center">
                 <div className="w-4 h-4 bg-neutral-800 mx-auto mb-4 rounded-full" />
-                <p className="font-semibold">T – 10 Days</p>
+                <p className="font-semibold">T – 2 Days</p>
                 <p className="text-sm text-neutral-600">
                   Booking opens
                 </p>
@@ -157,6 +184,7 @@ export default function Details() {
         {/* ===== CTA ===== */}
         <div className="text-center mt-28">
           <motion.button
+            onClick={scrollToBooking} 
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.95 }}
             className="bg-black text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg"

@@ -89,14 +89,14 @@ export const QUESTION_FLOW = {
 
   name: {
     id: "name",
-    question: "What should I call you?",
+    question: "Your name teach?",
     type: "input",
     next: "contact"
   },
 
   contact: {
     id: "contact",
-    question: "Kindly enter your WhatsApp line.",
+    question: "Kindly enter your WhatsApp contact.",
     type: "input",
     next: "askMe"
   },

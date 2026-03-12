@@ -24,6 +24,7 @@ export default function BookingFlow() {
   const [showFinePrint, setShowFinePrint] = useState(false);
   const [history, setHistory] = useState<QuestionKey[]>([]);
   const [isBooked, setIsBooked] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const current = QUESTION_FLOW[currentId];
 
@@ -45,7 +46,7 @@ export default function BookingFlow() {
         ...finalAnswers,
         createdAt: serverTimestamp(),
       });
-      console.log("Document written with ID: ", docRef.id); // If you see this in console, it worked!
+      console.log("Document written with ID: ", docRef.id); 
       return true;
     } catch (error) {
       console.error("Firebase Error:", error);
@@ -73,6 +74,16 @@ export default function BookingFlow() {
 
   const handleTextSubmit = async () => {
     if (!inputValue.trim()) return;
+
+    if (currentId === "contact") {
+      const phoneRegex = /^[+]?[\d\s-]{10,15}$/;
+      if (!phoneRegex.test(inputValue.trim())) {
+        setError("Please enter a valid phone number (digits only)");
+        return; 
+      }
+    }
+    setError(null);
+
     const updatedAnswers = { ...answers, [currentId]: inputValue };
     setAnswers(updatedAnswers);
     setInputValue("");
@@ -87,7 +98,6 @@ export default function BookingFlow() {
 
   useEffect(() => {
     const handleCalendlyEvent = (e: MessageEvent) => {
-      // Check if the event is specifically a successful booking
       if (e.data.event === 'calendly.event_scheduled') {
         setIsBooked(true);
       }
@@ -170,12 +180,61 @@ export default function BookingFlow() {
                 )}
                 {("type" in current) && (
                   <div className="space-y-4">
-                    {current.type === "input" ? (
-                      <input value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="border-2 border-black p-4 w-full font-bold outline-none" placeholder="Type here..." />
-                    ) : (
-                      <textarea value={inputValue} onChange={(e) => setInputValue(e.target.value)} className="border-2 border-black p-4 w-full h-32 font-bold outline-none" placeholder="Go deep..." />
-                    )}
-                    <button onClick={handleTextSubmit} className="bg-black text-white p-4 font-bold w-full">CONTINUE →</button>
+                    <motion.div
+                      animate={error ? { x: [-10, 10, -10, 10, 0] } : {}}
+                      transition={{ duration: 0.4 }}
+                    >
+                      {current.type === "input" ? (
+                        <input 
+                          value={inputValue} 
+                          onChange={(e) => {
+                            setError(null); 
+                            setInputValue(currentId === "contact" 
+                              ? e.target.value.replace(/[^\d+]/g, "") 
+                              : e.target.value
+                            );
+                          }} 
+                          type={currentId === "contact" ? "tel" : "text"}
+                          className={`border-2 p-4 w-full font-bold outline-none transition-colors ${
+                            error ? "border-red-500 bg-red-50" : "border-black"
+                          }`} 
+                          placeholder={currentId === "contact" ? "08012345678" : "Type here..."} 
+                        />
+                      ) : (
+                        <textarea 
+                          value={inputValue} 
+                          onChange={(e) => {
+                            setError(null);
+                            setInputValue(e.target.value);
+                          }} 
+                          className={`border-2 p-4 w-full h-32 font-bold outline-none transition-colors ${
+                            error ? "border-red-500 bg-red-50" : "border-black focus:bg-yellow-50"
+                          }`} 
+                          placeholder="Go deep..." 
+                        />
+                      )}
+                    </motion.div>
+
+                    {/* Display the error message if it exists */}
+                    <AnimatePresence>
+                      {error && (
+                        <motion.p 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-red-600 font-mono text-[10px] uppercase tracking-widest font-bold"
+                        >
+                          {error}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+
+                    <button 
+                      onClick={handleTextSubmit} 
+                      className="bg-black text-white p-4 font-bold w-full active:scale-95 transition-transform"
+                    >
+                      CONTINUE →
+                    </button>
                   </div>
                 )}
               </>
@@ -189,7 +248,11 @@ export default function BookingFlow() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
               <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-yellow-300 border-4 border-black p-8 max-w-sm">
                 <h3 className="text-2xl font-black mb-4 uppercase">Patronage Advisory</h3>
-                <p className="font-bold mb-6 leading-tight text-sm">If the bill exceeds 5k, it’s your birthday gift to me. Deal?</p>
+                <p className="font-medium mb-6 leading-relaxed text-sm"> 
+                  If we’re meeting somewhere with a bill above 5k,that bill is 100% your birthday gift to me.
+                  I’m the talent. You’re the patron of the arts.
+                  Deal? 
+                </p>
                 <div className="flex flex-col gap-3">
                   <button onClick={() => { setAnswers({...answers, format: 'physical'}); setShowFinePrint(false); goTo("topic"); }} className="bg-black text-white p-4 font-black">I ACCEPT THE TERMS</button>
                   <button onClick={() => { setAnswers({...answers, format: 'virtual'}); setShowFinePrint(false); goTo("topic"); }} className="border-2 border-black p-4 font-black uppercase text-xs">{`Actually, let's do virtual`}</button>

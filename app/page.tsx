@@ -26,7 +26,9 @@ export default function Home() {
         <Hero />
         <Invitation />
         <Details />
-        <BookingFlow />
+        <section id="booking-portal"> 
+          <BookingFlow />
+        </section>
       </div>
 
       <VibeToggle />
