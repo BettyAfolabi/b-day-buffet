@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { InlineWidget } from "react-calendly";
 import { QUESTION_FLOW } from "../../lib/constants";
 import { db } from "../../lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -143,21 +142,31 @@ export default function BookingFlow() {
                   </motion.div>
                 ) : (
                   /* --- CALENDLY VIEW --- */
-                  <>
-                    <h2 className="text-2xl font-black uppercase">Secure Your Slot</h2>
-                    <p className="text-[10px] font-mono bg-black text-white p-2 inline-block">
-                      MODE: {answers.format?.toUpperCase()}
-                    </p>
-                    <div className="h-125 -mx-4 overflow-y-auto border-t-2 border-black mt-4">
-                      <InlineWidget 
-                        url={CALENDLY_LINKS[answers.format as keyof typeof CALENDLY_LINKS] || CALENDLY_LINKS.virtual}
-                        prefill={{
-                          name: answers.name,
-                        }}
-                        styles={{ height: '1000px' }}
-                      />
+                  <div className="space-y-6 text-center py-4">
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Final Step: Secure the Time</h2>
+                    
+                    <div className="bg-neutral-100 p-4 border-2 border-dashed border-black">
+                      <p className="text-[10px] font-mono uppercase mb-1 opacity-60">Session Mode</p>
+                      <p className="font-bold text-lg uppercase">{answers.format}</p>
                     </div>
-                  </>
+
+                    <button 
+                      onClick={() => {
+                        const baseUrl = CALENDLY_LINKS[answers.format as keyof typeof CALENDLY_LINKS] || CALENDLY_LINKS.virtual;
+                        // We pass the name and topic via URL parameters so they are still pre-filled!
+                        const finalUrl = `${baseUrl}?name=${encodeURIComponent(answers.name || "")}&a8=${encodeURIComponent(answers.topic || "")}`;
+                        
+                        window.open(finalUrl, '_blank'); // Opens in a fresh, secure tab
+                      }}
+                      className="w-full bg-black text-white p-6 font-black text-xl shadow-[6px_6px_0_0_#4ade80] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                    >
+                      OPEN CALENDAR →
+                    </button>
+
+                    <p className="text-[10px] uppercase font-bold opacity-40 mt-4">
+                      Confirm your time there to finalize.
+                    </p>
+                  </div>
                 )}
               </div>
             ) : (
