@@ -153,7 +153,6 @@ export default function BookingFlow() {
                         url={CALENDLY_LINKS[answers.format as keyof typeof CALENDLY_LINKS] || CALENDLY_LINKS.virtual}
                         prefill={{
                           name: answers.name,
-                          customAnswers: { a8: answers.topic } 
                         }}
                         styles={{ height: '1000px' }}
                       />
