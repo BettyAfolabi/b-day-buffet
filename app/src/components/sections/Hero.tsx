@@ -12,21 +12,33 @@ const photos = [
   "/me/p6.jpg",
 ];
 
-function getDaysUntilBirthday() {
+function getBirthdayStatus() {
   const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+  
   const year = today.getFullYear();
   const birthday = new Date(year, 2, 14); 
+  birthday.setHours(0, 0, 0, 0);
 
-  if (birthday < today) {
-    birthday.setFullYear(year + 1);
-  }
+  const diffTime = birthday.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  const diff = birthday.getTime() - today.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return { phase: "today", days: 0 };
+  if (diffDays < 0) return { phase: "past", days: 0 };
+  return { phase: "future", days: diffDays };
 }
 
 export default function Hero() {
-  const daysLeft = getDaysUntilBirthday();
+  const birthdayStatus = getBirthdayStatus();
+
+  let birthdayText = "";
+  if (birthdayStatus.phase === "today") {
+    birthdayText = "and today is my birthday!";
+  } else if (birthdayStatus.phase === "past") {
+    birthdayText = "and I did something peculiar for my birthday.";
+  } else {
+    birthdayText = `and my birthday is in ${birthdayStatus.days} days.`;
+  }
 
   const script = [
     {
@@ -40,7 +52,7 @@ export default function Hero() {
       clearAfter: true,
     },
     {
-      text: `and my birthday is in ${daysLeft} days.`,
+      text: birthdayText,
       pauseAfter: 1800,
       clearAfter: true,
     },
