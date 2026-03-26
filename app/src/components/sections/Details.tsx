@@ -91,7 +91,7 @@ export default function Details() {
           >
             <div className="relative aspect-4/5 bg-neutral-200 border-2 border-black grayscale shadow-[12px_12px_0_0_#000] overflow-hidden">
               <Image 
-                src="/me/p1.jpg" 
+                src="/me/p3.jpeg" 
                 alt="The Curator"
                 fill
                 className="object-cover"

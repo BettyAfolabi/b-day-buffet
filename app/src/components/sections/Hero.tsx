@@ -53,7 +53,7 @@ export default function Hero() {
     },
     {
       text: birthdayText,
-      pauseAfter: 1800,
+      pauseAfter: 2000,
       clearAfter: true,
     },
     {
@@ -181,7 +181,7 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 6.5, duration: 1 }}
+          transition={{ delay: 6.6, duration: 1 }}
           className="absolute z-30"
         >
           <div className="bg-white px-10 py-8 rounded-3xl shadow-2xl border-4 border-white max-w-lg mx-auto">
@@ -189,7 +189,7 @@ export default function Hero() {
             <p className="text-lg md:text-xl font-semibold text-black text-center leading-relaxed">
               <ScriptedTypewriter
                 script={script}
-                speed={75}
+                speed={70}
                 startDelay={7200}
               />
             </p>

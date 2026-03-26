@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { QUESTION_FLOW } from "../../lib/constants";
+import { QUESTION_FLOW, SLOTS } from "../../lib/constants";
 import { db } from "../../lib/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import Confetti from "../ui/confetti";
 
-const CALENDLY_LINKS = {
-  virtual: process.env.NEXT_PUBLIC_VIRTUAL_LINK || "",
-  physical: process.env.NEXT_PUBLIC_INPERSON_LINK || "",
-  walk: process.env.NEXT_PUBLIC_INPERSON_LINK || "",
-} as const;
+// free calendly priviledges ended 😩
+// const CALENDLY_LINKS = {
+//   virtual: process.env.NEXT_PUBLIC_VIRTUAL_LINK || "",
+//   physical: process.env.NEXT_PUBLIC_INPERSON_LINK || "",
+//   walk: process.env.NEXT_PUBLIC_INPERSON_LINK || "",
+// } as const;
 
 type QuestionKey = keyof typeof QUESTION_FLOW;
 type Answers = Record<string, string>;
@@ -24,6 +25,7 @@ export default function BookingFlow() {
   const [history, setHistory] = useState<QuestionKey[]>([]);
   const [isBooked, setIsBooked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const current = QUESTION_FLOW[currentId];
 
@@ -88,23 +90,40 @@ export default function BookingFlow() {
     setInputValue("");
 
     if (currentId === "askMe") {
-      await saveToFirebase(updatedAnswers);
-      setCurrentId("complete");
+      setCurrentId("complete" as QuestionKey);
     } else if ("next" in current && current.next) {
       goTo(current.next as QuestionKey);
     }
   };
 
-  useEffect(() => {
-    const handleCalendlyEvent = (e: MessageEvent) => {
-      if (e.data.event === 'calendly.event_scheduled') {
-        setIsBooked(true);
-      }
+  const handleFinalBooking = async (slotLabel: string) => {
+    setLoading(true);
+    const finalAnswers = { 
+      ...answers, 
+      selectedSlot: slotLabel,
+      bookingStatus: "confirmed" 
     };
+    
+    const success = await saveToFirebase(finalAnswers);
+    if (success) {
+      setAnswers(finalAnswers);
+      setIsBooked(true);
+    } else {
+      setError("Connection error. Please try again.");
+    }
+    setLoading(false);
+  };
 
-    window.addEventListener('message', handleCalendlyEvent);
-    return () => window.removeEventListener('message', handleCalendlyEvent);
-  }, []);
+  // useEffect(() => {
+  //   const handleCalendlyEvent = (e: MessageEvent) => {
+  //     if (e.data.event === 'calendly.event_scheduled') {
+  //       setIsBooked(true);
+  //     }
+  //   };
+
+  //   window.addEventListener('message', handleCalendlyEvent);
+  //   return () => window.removeEventListener('message', handleCalendlyEvent);
+  // }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-yellow-300 via-pink-300 to-blue-300 p-6">
@@ -119,16 +138,27 @@ export default function BookingFlow() {
 
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentId}
+            key={loading ? "loading" : currentId} 
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -50, opacity: 0 }}
             className="bg-white w-full p-8 rounded-2xl shadow-2xl border-2 border-black overflow-hidden"
           >
-            {currentId === "complete" ? (
+            {loading ? (
+              /* LOADING VIEW */
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <motion.div 
+                  animate={{ rotate: 360 }} 
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  className="w-10 h-10 border-4 border-black border-t-transparent rounded-full"
+                />
+                <p className="font-mono text-xs uppercase animate-pulse">Syncing with Archive...</p>
+              </div>
+            ) : currentId === "complete" ? (
+              /* COMPLETE / SUCCESS VIEW */
               <div className="space-y-4">
                 {isBooked ? (
-                  /* --- SUCCESS TICKET STUB --- */
+                  /* SUCCESS TICKET STUB */
                   <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="text-center py-6 space-y-4">
                     <div className="bg-acid-yellow border-2 border-black p-4 rotate-2">
                       <h2 className="text-3xl font-black uppercase">Entry Granted.</h2>
@@ -137,35 +167,68 @@ export default function BookingFlow() {
                     <div className="border-t-2 border-dashed border-black pt-4 text-[10px] text-left font-mono">
                       <p>TOPIC: {answers.topic?.toUpperCase()}</p>
                       <p>FORMAT: {answers.format?.toUpperCase()}</p>
-                      <p className="mt-4 opacity-50 italic text-center">Check your WhatsApp/Email for details.</p>
+                      <p className="text-blue-600 font-bold">TIME: {answers.selectedSlot?.toUpperCase()}</p>
+                      <p className="mt-4 italic text-xs leading-tight text-center">
+                        THIS IS A LEGALLY BINDING BIRTHDAY COMMITMENT. <br/> SCREENSHOT THIS TICKET.
+                      </p>
+                      <p className="mt-4 opacity-50 italic text-center">I‘ll reach out on WhatsApp shortly.</p>
                     </div>
                   </motion.div>
                 ) : (
                   /* --- CALENDLY VIEW --- */
-                  <div className="space-y-6 text-center py-4">
-                    <h2 className="text-2xl font-black uppercase tracking-tight">Final Step: Secure the Time</h2>
+                  // <div className="space-y-6 text-center py-4">
+                  //   <h2 className="text-2xl font-black uppercase tracking-tight">Final Step: Secure the Time</h2>
                     
-                    <div className="bg-neutral-100 p-4 border-2 border-dashed border-black">
-                      <p className="text-[10px] font-mono uppercase mb-1 opacity-60">Session Mode</p>
-                      <p className="font-bold text-lg uppercase">{answers.format}</p>
+                  //   <div className="bg-neutral-100 p-4 border-2 border-dashed border-black">
+                  //     <p className="text-[10px] font-mono uppercase mb-1 opacity-60">Session Mode</p>
+                  //     <p className="font-bold text-lg uppercase">{answers.format}</p>
+                  //   </div>
+
+                  //   <button 
+                  //     onClick={() => {
+                  //       const baseUrl = CALENDLY_LINKS[answers.format as keyof typeof CALENDLY_LINKS] || CALENDLY_LINKS.virtual;
+                  //       // We pass the name and topic via URL parameters so they are still pre-filled!
+                  //       const finalUrl = `${baseUrl}?name=${encodeURIComponent(answers.name || "")}&a8=${encodeURIComponent(answers.topic || "")}`;
+                        
+                  //       window.open(finalUrl, '_blank'); // Opens in a fresh, secure tab
+                  //     }}
+                  //     className="w-full bg-black text-white p-6 font-black text-xl shadow-[6px_6px_0_0_#4ade80] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                  //   >
+                  //     OPEN CALENDAR →
+                  //   </button>
+
+                  //   <p className="text-[10px] uppercase font-bold opacity-40 mt-4">
+                  //     Confirm your time there to finalize.
+                  //   </p>
+                  // </div>
+
+                  /* --- SLOT PICKER VIEW --- */
+                  <div className="space-y-4">
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl font-black uppercase tracking-tight">Claim a Slot</h2>
+                      <p className="text-[10px] font-mono bg-black text-white px-2 py-1 inline-block mt-2">
+                        MODE: {answers.format?.toUpperCase()}
+                      </p>
                     </div>
 
-                    <button 
-                      onClick={() => {
-                        const baseUrl = CALENDLY_LINKS[answers.format as keyof typeof CALENDLY_LINKS] || CALENDLY_LINKS.virtual;
-                        // We pass the name and topic via URL parameters so they are still pre-filled!
-                        const finalUrl = `${baseUrl}?name=${encodeURIComponent(answers.name || "")}&a8=${encodeURIComponent(answers.topic || "")}`;
-                        
-                        window.open(finalUrl, '_blank'); // Opens in a fresh, secure tab
-                      }}
-                      className="w-full bg-black text-white p-6 font-black text-xl shadow-[6px_6px_0_0_#4ade80] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
-                    >
-                      OPEN CALENDAR →
-                    </button>
+                    <div className="grid gap-2 max-h-75 px-4 overflow-y-auto custom-scrollbar">
+                      {(SLOTS[answers.format as keyof typeof SLOTS] || SLOTS.virtual).map((slot) => (
+                        <button
+                          key={slot.id}
+                          onClick={() => handleFinalBooking(slot.label)}
+                          className="border-2 border-black p-4 text-left font-bold hover:bg-acid-yellow transition-all active:scale-95 flex justify-between items-center group"
+                        >
+                          <span className="text-sm">{slot.label}</span>
+                          <span className="opacity-40 group-hover:opacity-100 italic">BOOK →</span>
+                        </button>
+                      ))}
+                    </div>
 
-                    <p className="text-[10px] uppercase font-bold opacity-40 mt-4">
-                      Confirm your time there to finalize.
+                    <p className="text-[10px] text-center opacity-50 font-medium uppercase mt-4">
+                      *All times are in WAT (Lagos Time)
                     </p>
+                    
+                    {error && <p className="text-red-500 text-center text-xs font-bold">{error}</p>}
                   </div>
                 )}
               </div>

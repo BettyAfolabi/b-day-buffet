@@ -113,3 +113,19 @@ export const QUESTION_FLOW = {
     question: "You're in. I'll be in touch shortly.",
   }
 } as const;
+
+export const SLOTS = {
+  virtual: [
+    { id: "v1", label: "Mon, March 30 @ 2:00 PM" },
+    { id: "v2", label: "Mon, March 30 @ 8:00 PM"  },
+    { id: "v3", label: "Thu, April 2 @ 2:00 PM" },
+    { id: "v4", label: "Thu, April 2 @ 8:00 PM"  },
+    { id: "v5", label: "Mon, April 6 @ 2:00 PM"  },
+  ],
+  physical: [
+    { id: "p1", label: "Sat, April 4 @ 1:00 PM" },
+    { id: "p2", label: "Fri, April 10 @ 2:00 PM" },
+    { id: "p3", label: "Sat, April 11 @ 1:00 PM" },
+    { id: "p4", label: "Fri, April 17 @ 2:00 PM" },
+  ]
+};
