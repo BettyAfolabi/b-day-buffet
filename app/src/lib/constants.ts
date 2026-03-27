@@ -116,7 +116,7 @@ export const QUESTION_FLOW = {
 
 export const SLOTS = {
   virtual: [
-    { id: "v2", label: "Mon, March 30 @ 8:00 PM"  },
+    { id: "v1", label: "Mon, March 30 @ 2:00 PM" },
     { id: "v4", label: "Thu, April 2 @ 8:00 PM"  },
     { id: "v5", label: "Mon, April 6 @ 2:00 PM"  },
   ],
