@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { QUESTION_FLOW, SLOTS } from "../../lib/constants";
-import { db } from "../../lib/firebase";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { QUESTION_FLOW } from "../../lib/constants";
+// import { db } from "../../lib/firebase";
+// import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import Confetti from "../ui/confetti";
 
 // free calendly priviledges ended 😩
@@ -25,7 +25,7 @@ export default function BookingFlow() {
   const [history, setHistory] = useState<QuestionKey[]>([]);
   const [isBooked, setIsBooked] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   const current = QUESTION_FLOW[currentId];
 
@@ -41,19 +41,19 @@ export default function BookingFlow() {
     setCurrentId(previous);
   };
 
-  const saveToFirebase = async (finalAnswers: Answers) => {
-    try {
-      const docRef = await addDoc(collection(db, "bookings"), {
-        ...finalAnswers,
-        createdAt: serverTimestamp(),
-      });
-      console.log("Document written with ID: ", docRef.id); 
-      return true;
-    } catch (error) {
-      console.error("Firebase Error:", error);
-      return false;
-    }
-  };
+  // const saveToFirebase = async (finalAnswers: Answers) => {
+  //   try {
+  //     const docRef = await addDoc(collection(db, "bookings"), {
+  //       ...finalAnswers,
+  //       createdAt: serverTimestamp(),
+  //     });
+  //     console.log("Document written with ID: ", docRef.id); 
+  //     return true;
+  //   } catch (error) {
+  //     console.error("Firebase Error:", error);
+  //     return false;
+  //   }
+  // };
 
   const handleOptionSelect = (value: string, next?: QuestionKey) => {
     const updatedAnswers = { ...answers, [currentId]: value };
@@ -96,23 +96,23 @@ export default function BookingFlow() {
     }
   };
 
-  const handleFinalBooking = async (slotLabel: string) => {
-    setLoading(true);
-    const finalAnswers = { 
-      ...answers, 
-      selectedSlot: slotLabel,
-      bookingStatus: "confirmed" 
-    };
+  // const handleFinalBooking = async (slotLabel: string) => {
+  //   setLoading(true);
+  //   const finalAnswers = { 
+  //     ...answers, 
+  //     selectedSlot: slotLabel,
+  //     bookingStatus: "confirmed" 
+  //   };
     
-    const success = await saveToFirebase(finalAnswers);
-    if (success) {
-      setAnswers(finalAnswers);
-      setIsBooked(true);
-    } else {
-      setError("Connection error. Please try again.");
-    }
-    setLoading(false);
-  };
+  //   const success = await saveToFirebase(finalAnswers);
+  //   if (success) {
+  //     setAnswers(finalAnswers);
+  //     setIsBooked(true);
+  //   } else {
+  //     setError("Connection error. Please try again.");
+  //   }
+  //   setLoading(false);
+  // };
 
   // useEffect(() => {
   //   const handleCalendlyEvent = (e: MessageEvent) => {
@@ -203,32 +203,71 @@ export default function BookingFlow() {
                   // </div>
 
                   /* --- SLOT PICKER VIEW --- */
-                  <div className="space-y-4">
-                    <div className="text-center mb-6">
-                      <h2 className="text-2xl font-black uppercase tracking-tight">Claim a Slot</h2>
-                      <p className="text-[10px] font-mono bg-black text-white px-2 py-1 inline-block mt-2">
-                        MODE: {answers.format?.toUpperCase()}
+                  // <div className="space-y-4">
+                  //   <div className="text-center mb-6">
+                  //     <h2 className="text-2xl font-black uppercase tracking-tight">Claim a Slot</h2>
+                  //     <p className="text-[10px] font-mono bg-black text-white px-2 py-1 inline-block mt-2">
+                  //       MODE: {answers.format?.toUpperCase()}
+                  //     </p>
+                  //   </div>
+
+                  //   <div className="grid gap-2 max-h-75 px-4 overflow-y-auto custom-scrollbar">
+                  //     {(SLOTS[answers.format as keyof typeof SLOTS] || SLOTS.virtual).map((slot) => (
+                  //       <button
+                  //         key={slot.id}
+                  //         onClick={() => handleFinalBooking(slot.label)}
+                  //         className="border-2 border-black p-4 text-left font-bold hover:bg-acid-yellow transition-all active:scale-95 flex justify-between items-center group"
+                  //       >
+                  //         <span className="text-sm">{slot.label}</span>
+                  //         <span className="opacity-40 group-hover:opacity-100 italic">BOOK →</span>
+                  //       </button>
+                  //     ))}
+                  //   </div>
+
+                  //   <p className="text-[10px] text-center opacity-50 font-medium uppercase mt-4">
+                  //     *All times are in WAT (Lagos Time)
+                  //   </p>
+                    
+                  //   {error && <p className="text-red-500 text-center text-xs font-bold">{error}</p>}
+                  // </div>
+
+                  /* --- BOOKING CLOSED / PREVIEW VIEW --- */
+                  <div className="space-y-6 text-center py-4">
+                    <div className="space-y-2">
+                      <div className="inline-block bg-red-100 text-red-600 font-mono text-[10px] px-2 py-1 uppercase font-bold border border-red-200">
+                        Status: Season Concluded
+                      </div>
+                      <h2 className="text-2xl font-black uppercase tracking-tight">The Archive is Full</h2>
+                      <p className="text-sm font-medium text-gray-500 leading-relaxed">
+                        Booking for the birthday exhibition is now closed. 
+                        Thank you to everyone who claimed a slot!
                       </p>
                     </div>
 
-                    <div className="grid gap-2 max-h-75 px-4 overflow-y-auto custom-scrollbar">
-                      {(SLOTS[answers.format as keyof typeof SLOTS] || SLOTS.virtual).map((slot) => (
-                        <button
-                          key={slot.id}
-                          onClick={() => handleFinalBooking(slot.label)}
-                          className="border-2 border-black p-4 text-left font-bold hover:bg-acid-yellow transition-all active:scale-95 flex justify-between items-center group"
-                        >
-                          <span className="text-sm">{slot.label}</span>
-                          <span className="opacity-40 group-hover:opacity-100 italic">BOOK →</span>
-                        </button>
-                      ))}
+                    <div className="pt-4 border-t-2 border-dashed border-gray-200">
+                      <button 
+                        onClick={() => {
+                          // Simulate a completed booking for portfolio visitors
+                          setAnswers({
+                            ...answers,
+                            name: answers.name || "Guest Inductee",
+                            topic: answers.topic || "Future Tech & Digital Archives",
+                            selectedSlot: "MAR.14 // 14:00_WAT",
+                            format: answers.format || "physical"
+                          });
+                          setIsBooked(true);
+                        }}
+                        className="group relative w-full bg-black text-white p-6 font-black text-xl shadow-[6px_6px_0_0_#4ade80] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                      >
+                        PREVIEW TICKET →
+                        <span className="absolute -top-3 -right-2 bg-yellow-400 text-black text-[9px] px-2 py-0.5 border border-black rotate-12 group-hover:rotate-0 transition-transform">
+                          DEMO MODE
+                        </span>
+                      </button>
+                      <p className="text-[10px] uppercase font-bold opacity-40 mt-6 tracking-widest">
+                        Select above to view the artifact UI
+                      </p>
                     </div>
-
-                    <p className="text-[10px] text-center opacity-50 font-medium uppercase mt-4">
-                      *All times are in WAT (Lagos Time)
-                    </p>
-                    
-                    {error && <p className="text-red-500 text-center text-xs font-bold">{error}</p>}
                   </div>
                 )}
               </div>
